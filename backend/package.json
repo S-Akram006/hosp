@@ -1,0 +1,41 @@
+{
+  "name": "hospital-ai-backend",
+  "version": "1.0.0",
+  "description": "Backend API for AI-Driven Hospital and Appointment Management System",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node src/seed.js",
+    "test": "node test_check.js"
+  },
+  "dependencies": {
+    "@google/genai": "^2.24.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5",
+    "multer": "^2.4.0",
+    "socket.io": "^4.8.4",
+    "tesseract.js": "^7.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  },
+  "keywords": [
+    "mern",
+    "hospital-management",
+    "healthcare",
+    "appointment-system",
+    "express",
+    "mongoose"
+  ],
+  "author": "",
+  "license": "ISC"
+}
