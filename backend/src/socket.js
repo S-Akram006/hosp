@@ -1,5 +1,6 @@
 import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
+import { isAllowedOrigin } from './config/cors.js';
 
 let ioInstance = null;
 
@@ -9,15 +10,15 @@ let ioInstance = null;
  * @returns {Server}
  */
 export const initSocket = (httpServer) => {
-  const allowedOrigins = [
-    process.env.CLIENT_URL,
-    'http://localhost:5173',
-    'http://localhost:3000',
-  ].filter(Boolean);
-
   ioInstance = new Server(httpServer, {
     cors: {
-      origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
+      origin: (origin, callback) => {
+        if (!origin || isAllowedOrigin(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Socket CORS origin not allowed'));
+        }
+      },
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
       credentials: true,
     },
