@@ -4,18 +4,25 @@ import axios from 'axios';
  * Dynamically resolve API Base URL with fallback to production backend
  */
 const getApiBaseUrl = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+  let url = import.meta.env.VITE_API_URL;
+  if (!url) {
+    if (
+      typeof window !== 'undefined' &&
+      window.location.hostname !== 'localhost' &&
+      window.location.hostname !== '127.0.0.1'
+    ) {
+      url = 'https://hosp-98t3.onrender.com/api';
+    } else {
+      url = 'http://localhost:5000/api';
+    }
   }
-  // Production fallback for deployed frontends (e.g. on Vercel)
-  if (
-    typeof window !== 'undefined' &&
-    window.location.hostname !== 'localhost' &&
-    window.location.hostname !== '127.0.0.1'
-  ) {
-    return 'https://hosp-98t3.onrender.com/api';
+
+  // Ensure url ends with /api
+  url = url.trim().replace(/\/+$/, '');
+  if (!url.endsWith('/api')) {
+    url = `${url}/api`;
   }
-  return 'http://localhost:5000/api';
+  return url;
 };
 
 const API_BASE_URL = getApiBaseUrl();
