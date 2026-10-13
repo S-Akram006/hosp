@@ -1,164 +1,162 @@
-# AI-Driven Hospital and Appointment Management System (MERN)
+# 🏥 MediAI Pulse — Modern Hospital & Appointment Management Platform
 
-A healthcare management and scheduling system built with Node.js, Express, Socket.io, MongoDB, React, Vite, and Tailwind CSS.
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Visit_Website-06b6d4?style=for-the-badge&logo=vercel)](https://hosp-tawny-seven.vercel.app/login)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-1e293b?style=for-the-badge&logo=github)](https://github.com/S-Akram006/hosp)
+[![Status](https://img.shields.io/badge/Status-Live_%26_Operational-10b981?style=for-the-badge)](https://hosp-98t3.onrender.com/api/health)
 
----
+> **MediAI Pulse** is an easy-to-use, all-in-one web platform that helps hospitals organize patient appointments, coordinate doctor schedules, and eliminate chaotic clinic waiting rooms.
 
-## Project Structure
-
-```text
-hospital-ai-system/
-├── backend/
-│   ├── src/
-│   │   ├── config/          # db.js (Mongoose connection & listeners)
-│   │   ├── controllers/     # authController, appointmentController, resourceController, aiController, emergencyController, queueController
-│   │   ├── middleware/      # authMiddleware.js, errorMiddleware.js, uploadMiddleware.js
-│   │   ├── models/          # User.js, Resource.js, Appointment.js, MedicalRecord.js
-│   │   ├── routes/          # authRoutes, appointmentRoutes, resourceRoutes, aiRoutes, emergencyRoutes, queueRoutes
-│   │   ├── services/        # aiService.js, ocrService.js, noShowService.js
-│   │   ├── utils/           # generateToken.js, slotValidator.js
-│   │   ├── socket.js        # Socket.io initialization & room topology
-│   │   └── server.js        # Node HTTP Server + Socket.io + Express entry
-│   ├── .env.example         # Environment template
-│   ├── .env                 # Local environment config
-│   ├── test_check.js        # Unit verification test suite
-│   └── package.json
-└── frontend/
-    ├── src/
-    │   ├── api/             # axiosClient.js, authApi.js, appointmentApi.js, aiApi.js, queueApi.js
-    │   ├── store/           # useAuthStore.js, useSocketStore.js
-    │   ├── components/
-    │   │   ├── common/      # Navbar.jsx, Sidebar.jsx, ProtectedRoute.jsx, LoadingSpinner.jsx
-    │   │   ├── ui/          # Button.jsx, Card.jsx, Badge.jsx, Input.jsx, Modal.jsx
-    │   │   ├── patient/     # TriageChatDrawer.jsx, DynamicSlotPicker.jsx, DocumentUploader.jsx, AppointmentCard.jsx
-    │   │   ├── doctor/      # PatientBriefingCard.jsx, AmbientScribeWidget.jsx, SoapNoteEditor.jsx, EmergencyOverrideModal.jsx
-    │   │   └── admin/       # ResourceMatrixGrid.jsx, LiveQueueBoard.jsx
-    │   ├── layouts/         # AuthLayout.jsx, DashboardLayout.jsx
-    │   ├── pages/
-    │   │   ├── auth/        # Login.jsx, Register.jsx
-    │   │   ├── patient/     # PatientDashboard.jsx
-    │   │   ├── doctor/      # DoctorDashboard.jsx
-    │   │   └── admin/       # AdminDashboard.jsx
-    │   ├── App.jsx          # React Router & RBAC routes
-    │   ├── index.css        # Tailwind CSS imports & base theme styles
-    │   └── main.jsx         # App mounting
-    ├── .env.example
-    ├── .env
-    ├── vite.config.js       # Vite + @tailwindcss/vite
-    └── package.json
-```
+🔗 **Try the Live App**: [https://hosp-tawny-seven.vercel.app/login](https://hosp-tawny-seven.vercel.app/login)  
+📂 **Source Code**: [https://github.com/S-Akram006/hosp](https://github.com/S-Akram006/hosp)
 
 ---
 
-## Phase 1: Authentication & RBAC
+## 🎯 What Problem Does This Solve?
 
-- **Data Model**: `User.js` supporting `patient`, `doctor`, and `admin` with `doctorProfile` and `patientProfile`.
-- **Security**: Pre-save bcryptjs password hashing and JWT token generator with role payload.
-- **Middleware**: `protect` (Bearer token verification) and `authorize(...roles)` (RBAC).
-- **Endpoints**: `/api/auth/register`, `/api/auth/login`, `/api/auth/me`, `/api/auth/doctors`.
+Visiting a hospital or scheduling a medical visit is often frustrating and slow:
+- **Phone calls and long holds** just to find out if a doctor is available.
+- **Crowded waiting lobbies** where patients wait for hours without knowing their place in line.
+- **Stacks of paper files and handwritten notes** that can easily be misplaced or misread.
+- **Unexpected emergency delays** that leave scheduled patients confused and uninformed.
 
----
-
-## Phase 2: Core Domain Models & Calendar Engine
-
-- **`Resource.js`**: Tracks equipment & rooms (`consultation_room`, `mri`, `ct_scan`, `xray`, `ultrasound`, `operation_theater`) with `currentStatus` (`available`, `occupied`, `sanitizing`, `maintenance`).
-- **`Appointment.js`**: Core appointment records referencing `patientId`, `doctorId`, and `resourceId`.
-- **`MedicalRecord.js`**: Clinical documentation referencing `appointmentId`, `patientId`, and `doctorId`, containing `rawTranscript`, structured `soapNote`, and `prescriptions` array with doctor digital signature.
-- **`slotValidator.js`**: Prevents doctor double-booking, verifies doctor's weekly profile schedule (`workingHours`), and checks physical resource availability.
+### 💡 The Solution
+MediAI Pulse replaces manual paperwork and telephone tag with a **modern digital healthcare portal**:
+1. **Patients** pick the exact date and time slot that fits their schedule, check in online from home or the lobby, and monitor delays in real time.
+2. **Doctors** see an organized list of today’s visits, use smart digital scribing to capture consultation notes effortlessly, and mark visits complete with one click.
+3. **Hospital Administrators** keep track of examination rooms, medical equipment (like MRI and CT scanners), and clinic queues from a central command dashboard.
 
 ---
 
-## Phase 3: AI Engine & Background Logic
+## 👥 Who Uses the Platform? (User Roles)
 
-- **AI Symptom Triage**: `POST /api/ai/triage` evaluates symptoms, flags red flags, routes specialty, and calculates dynamic duration.
-- **Ambient Clinical Documentation**: `POST /api/ai/generate-soap` converts consultation conversation to structured SOAP notes and updates draft medical records.
-- **Pre-visit Intake OCR**: `POST /api/ai/ocr-intake` extracts document text via `tesseract.js` and structures insurance/prescription details via LLM.
-- **Predictive No-Show Risk Engine**: Evaluates lead time, urgency, and past patient history to compute attendance risk directly upon booking.
+The platform provides tailored workspaces for each person involved in the hospital visit:
 
----
-
-## Phase 4: Real-Time Event Layer (Socket.io)
-
-- **HTTP Server & Socket.io Architecture**: Native `http.createServer(app)` in `server.js` with singleton accessor in `socket.js`.
-- **Room Topology**: `room:doctor:<doctorId>`, `room:patient:<patientId>`, `room:waiting-room`, `room:admin`.
-- **Emergency Override Trigger (`POST /api/emergency/override`)**: Shifts doctor's remaining daily schedule and broadcasts delay notifications to patients, waiting displays, and ops.
-- **Live Hospital Queue (`GET /api/queue/live`)**: Real-time status broadcasting (`checked-in`, `in-consultation`, `completed`).
+| Role | Who It's For | What They Can Do |
+|---|---|---|
+| **🧑‍⚕️ Patient** | Everyday people seeking care | • Create an account or sign in with email<br>• Describe symptoms to receive AI specialist recommendations<br>• Choose available date and time slots on doctor calendars<br>• Check in online upon arrival<br>• View past medical history, prescriptions, and visit statuses<br>• Cancel appointments if plans change |
+| **🩺 Doctor** | Physicians & specialists | • Set daily working hours and consultation shift times<br>• View today’s live queue of scheduled and waiting patients<br>• Review patient symptoms and medical background before entering the room<br>• Generate automated consultation summary notes (SOAP notes)<br>• Digitally sign medical records to mark visits completed |
+| **🏢 Administrator** | Hospital staff & managers | • Oversee hospital-wide clinic queues and real-time waiting times<br>• Monitor physical facilities (Consultation Rooms, MRI Suites, CT Scanners)<br>• Trigger emergency overrides to safely shift schedules during priority trauma arrivals<br>• Ensure hospital resources run smoothly without double-bookings |
 
 ---
 
-## Phase 5: Frontend Foundation & Design System
+## ✨ Key Features Explained in Plain English
 
-- **Framework**: React 19 + Vite 8 + Tailwind CSS.
-- **Global State**: Zustand stores `useAuthStore` and `useSocketStore`.
-- **UI Kit**: `Button`, `Card`, `Badge`, `Input`, `Modal`, `LoadingSpinner`.
-- **Layouts**: `AuthLayout` and `DashboardLayout` with responsive `Sidebar` and `Navbar`.
-
----
-
-## Phase 6: Role-Specific Feature Portals
-
-### 1. Patient Portal (`PatientDashboard.jsx`)
-- **AI Symptom Triage Drawer (`TriageChatDrawer.jsx`)**: Conversational symptom assessment with red flag warnings and specialty routing.
-- **Dynamic Slot Picker (`DynamicSlotPicker.jsx`)**: Automatically sizes calendar slots to AI triage duration, filters physicians by specialty, and checks slot collisions.
-- **Document OCR Uploader (`DocumentUploader.jsx`)**: Drag-and-drop intake document scanner with Tesseract text extraction and profile sync.
-- **Live Appointment View (`AppointmentCard.jsx`)**: Displays scheduled visits with real-time Socket.io delay notification alerts.
-
-### 2. Doctor Portal (`DoctorDashboard.jsx`)
-- **Daily Consultation Queue**: Chronological list of scheduled patients with calculated no-show risk scores.
-- **Patient Briefing Card (`PatientBriefingCard.jsx`)**: Pre-consultation summary featuring AI triage notes, vitals, allergies, and chronic conditions.
-- **Ambient AI Scribe (`AmbientScribeWidget.jsx`)**: Audio dictation and live conversation transcription triggering AI SOAP generation.
-- **SOAP Note Editor (`SoapNoteEditor.jsx`)**: Editable 4-box SOAP note form with dynamic prescription table and "Sign & Complete Consultation" button.
-- **Emergency Override Modal (`EmergencyOverrideModal.jsx`)**: One-click shift of upcoming daily appointments with live multi-room broadcast.
-
-### 3. Admin & Facility Portal (`AdminDashboard.jsx`)
-- **Resource Matrix Board (`ResourceMatrixGrid.jsx`)**: Real-time grid of exam rooms, MRI, and CT scanners with live status toggles (`available`, `occupied`, `sanitizing`, `maintenance`).
-- **Live Clinic Waiting Monitor (`LiveQueueBoard.jsx`)**: Public TV monitor stream showing privacy-safe queue tickets (`TK-A1B2`, masked patient tokens `J*** D***`) and footfall metrics.
+- **📅 Smart Calendar Booking**: Automatically checks each doctor’s shift hours so patients can only pick times when the physician is actively on duty—no double bookings, ever.
+- **📱 One-Click Online Check-In**: Patients can confirm their arrival with a single tap on their phone or computer, notifying the clinic staff immediately.
+- **⏱️ Live Queue Updates**: Hospital screens and patient phones update in real time without having to refresh the page whenever a doctor finishes a visit or gets delayed.
+- **🎙️ AI Clinical Note Writer**: Doctors can review automated consultation summaries and prescription suggestions, freeing them to focus directly on patient care instead of typing.
+- **🚨 Instant Emergency Priority Mode**: When a critical trauma case arrives, the hospital can activate an emergency override that securely moves existing appointments forward by 30 minutes and notifies waiting patients automatically.
+- **🔒 Private & Secure Sign-In**: Protects sensitive health records with encrypted password authentication and role-based access so only authorized personnel can view medical charts.
 
 ---
 
-## Phase 7: Testing, Hardening & Security
+## ⚙️ How It Works (A Simple Real-World Analogy)
 
-### 1. Backend Security & Hardening Middleware
-- **Security Headers (`helmet`)**: Configures standard HTTP headers (`Content-Security-Policy`, `X-DNS-Prefetch-Control`, `X-Frame-Options`, `Strict-Transport-Security`, `X-Download-Options`).
-- **Strict CORS (`backend/src/config/cors.js`)**: Dynamic origin whitelist honoring `CLIENT_URL` and development origins with credentials enabled and explicit HTTP verbs (`GET`, `POST`, `PUT`, `DELETE`).
-- **Data Sanitization (`backend/src/middleware/sanitizeMiddleware.js`)**: Recursively strips NoSQL injection operators (`$`, `.`) from request bodies/queries and sanitizes malicious XSS `<script>` payloads.
-- **Three-Tier Rate Limiting (`backend/src/middleware/rateLimiter.js`)**:
-  - `generalLimiter`: 100 requests per 15 minutes per IP across all `/api/` endpoints.
-  - `authLimiter`: 5 attempts per 15 minutes for `/api/auth/login` and `/api/auth/register` (brute-force defense).
-  - `aiLimiter`: 20 requests per 15 minutes for `/api/ai/*` (token abuse & compute defense).
+Think of MediAI Pulse like a modern physical medical clinic with three core departments working together:
 
-### 2. Core Domain Integration Test Suites (`backend/src/tests/`)
-- **`appointmentCollision.test.js`**:
-  - Test 1: Successfully books within doctor profile working hours.
-  - Test 1b: Rejects bookings requested outside physician operating hours.
-  - Test 2: Detects and rejects overlapping appointment windows.
-  - Test 2b: Permits contiguous back-to-back non-overlapping appointments.
-  - Test 3: Rejects bookings targeting resources marked under `maintenance` or `sanitizing`.
-- **`emergencyOverride.test.js`**:
-  - Test 1: Simulates emergency override shifting $N$ future appointments by exactly $N$ minutes.
-  - Test 2: Verifies `isDelayed` flag is set to `true` and immutable `originalStartTime` is preserved across multiple shifts.
-
-### 3. Client-Side Defensive Hardening
-- **Global Error Boundary (`ErrorBoundary.jsx`)**: Catches unexpected rendering/network exceptions to prevent white-screen crashes, offering a self-recovery trigger.
-- **Sensitive Patient Data Masking (`maskData.js`)**: Masks policy numbers (`••••-4321`), emails (`a***@domain.com`), and names for HIPAA and public display compliance.
-- **Hardware Audio Stream Release (`AmbientScribeWidget.jsx`)**: Explicitly terminates hardware audio tracks (`stream.getTracks().forEach(track => track.stop())`) upon unmount or recording stop to release microphone locks.
+1. **🖥️ The Reception & Lobby (The Front - React & Tailwind CSS)**:  
+   *What you see on your screen.* Like walking into a clean, modern clinic lobby with clear signs, self-service check-in kiosks, and helpful information desks.
+2. **🏢 The Administrative Back Office (The Engine - Node.js & Express)**:  
+   *The logic running behind the scenes.* Like clinic administrators verifying insurance, checking calendar availability, confirming credentials, and announcing announcements over the intercom.
+3. **🗄️ The Secure Medical Archives (The Memory - MongoDB)**:  
+   *The digital filing room.* Like a secure, fireproof filing cabinet that safely stores patient records, past prescriptions, and equipment statuses so they can be retrieved instantly whenever needed.
 
 ---
 
-## Getting Started
+## 🚀 How to Run It on Your Computer (Step-by-Step for Beginners)
 
-### 1. Backend Setup
+Want to run the complete hospital system on your own laptop? Follow these simple steps.
+
+### What You Need First (Prerequisites)
+Make sure you have installed:
+1. **[Node.js](https://nodejs.org/)** (Version 18 or newer — this runs JavaScript on your computer).
+2. **[Git](https://git-scm.com/)** (To download the code repository).
+
+---
+
+### Step 1: Download the Project
+Open your computer's terminal or command prompt (PowerShell on Windows, Terminal on Mac/Linux) and run:
+
 ```bash
-cd backend
-npm install
-npm test       # Run Phase 1 - 7 automated verification & integration test suites
-npm run dev    # Start API server on http://localhost:5000
+git clone https://github.com/S-Akram006/hosp.git
+cd hosp
 ```
 
-### 2. Frontend Setup
-```bash
-cd frontend
-npm install
-npm run build  # Validate production bundle
-npm run dev    # Start Vite dev server on http://localhost:5173
-```
+---
+
+### Step 2: Set Up the Backend (The Engine)
+
+1. Move into the backend folder:
+   ```bash
+   cd backend
+   ```
+
+2. Install the required components:
+   ```bash
+   npm install
+   ```
+
+3. Create your configuration settings file:
+   Make a copy of `.env.example` named `.env`:
+   ```bash
+   # On Windows PowerShell:
+   Copy-Item .env.example .env
+
+   # On Mac / Linux:
+   cp .env.example .env
+   ```
+
+4. Populate the demo hospital database (creates sample doctors, patients, and rooms):
+   ```bash
+   npm run seed
+   ```
+
+5. Start the backend server:
+   ```bash
+   npm start
+   ```
+   *Your server will start and print `[Server] Hospital AI Backend running on port 5000`.*
+
+---
+
+### Step 3: Set Up the Frontend (The Website Interface)
+
+Open a **new, second terminal window** and run:
+
+1. Move into the frontend folder:
+   ```bash
+   cd hosp/frontend
+   ```
+
+2. Install the website components:
+   ```bash
+   npm install
+   ```
+
+3. Launch the website locally:
+   ```bash
+   npm run dev
+   ```
+
+4. Open your web browser and go to:
+   ```text
+   http://localhost:5173
+   ```
+
+---
+
+## 🔑 Quick Demo Login Accounts
+
+When testing locally or on the [Live Website](https://hosp-tawny-seven.vercel.app/login), you can click the quick demo buttons on the login screen or use these credentials:
+
+| Role | Demo Email | Demo Password |
+|---|---|---|
+| **Patient** | `patient@example.com` | `password123` |
+| **Doctor** | `doctor@hospital.com` | `password123` |
+| **Admin** | `admin@hospital.com` | `password123` |
+
+---
+
+## 📄 License & Credits
+
+Built with care for accessible, modern healthcare management. Licensed under the [ISC License](LICENSE).
