@@ -2,17 +2,19 @@ import { create } from 'zustand';
 import { io } from 'socket.io-client';
 
 const getSocketUrl = () => {
-  if (import.meta.env.VITE_SOCKET_URL) {
-    return import.meta.env.VITE_SOCKET_URL;
+  let url = import.meta.env.VITE_SOCKET_URL;
+  if (!url) {
+    if (
+      typeof window !== 'undefined' &&
+      window.location.hostname !== 'localhost' &&
+      window.location.hostname !== '127.0.0.1'
+    ) {
+      url = 'https://hosp-98t3.onrender.com';
+    } else {
+      url = 'http://localhost:5000';
+    }
   }
-  if (
-    typeof window !== 'undefined' &&
-    window.location.hostname !== 'localhost' &&
-    window.location.hostname !== '127.0.0.1'
-  ) {
-    return 'https://hosp-98t3.onrender.com';
-  }
-  return 'http://localhost:5000';
+  return url.trim().replace(/\/+$/, '');
 };
 
 const SOCKET_URL = getSocketUrl();

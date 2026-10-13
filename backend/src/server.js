@@ -93,18 +93,18 @@ app.get('/api/health', (req, res) => {
 // -------------------------------------------------------------
 
 // Strict auth rate limiter on authentication endpoints
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
-app.use('/api/auth', authRoutes);
+app.use(['/api/auth/login', '/auth/login'], authLimiter);
+app.use(['/api/auth/register', '/auth/register'], authLimiter);
+app.use(['/api/auth', '/auth'], authRoutes);
 
 // AI compute rate limiter on AI service routes
-app.use('/api/ai', aiLimiter, aiRoutes);
+app.use(['/api/ai', '/ai'], aiLimiter, aiRoutes);
 
 // Calendar, Emergency, Resource, and Queue routes
-app.use('/api/appointments', appointmentRoutes);
-app.use('/api/resources', resourceRoutes);
-app.use('/api/emergency', emergencyRoutes);
-app.use('/api/queue', queueRoutes);
+app.use(['/api/appointments', '/appointments'], appointmentRoutes);
+app.use(['/api/resources', '/resources'], resourceRoutes);
+app.use(['/api/emergency', '/emergency'], emergencyRoutes);
+app.use(['/api/queue', '/queue'], queueRoutes);
 
 // -------------------------------------------------------------
 // Centralized Error Handling Middleware
