@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore.js';
 import { useSocketStore } from '../../store/useSocketStore.js';
 import { appointmentApi } from '../../api/appointmentApi.js';
@@ -23,6 +24,7 @@ import AppointmentCard from '../../components/patient/AppointmentCard.jsx';
 export const PatientDashboard = () => {
   const { user } = useAuthStore();
   const { subscribe, unsubscribe } = useSocketStore();
+  const location = useLocation();
 
   const [appointments, setAppointments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,6 +34,19 @@ export const PatientDashboard = () => {
   const [isBookingActive, setIsBookingActive] = useState(false);
   const [liveDelayAlert, setLiveDelayAlert] = useState(null);
   const [successBanner, setSuccessBanner] = useState(null);
+
+  // Sync sub-routes directly from sidebar navigation (/patient/triage, /patient/intake-ocr, etc.)
+  useEffect(() => {
+    if (location.pathname.includes('/triage')) {
+      setIsTriageOpen(true);
+    } else if (location.pathname.includes('/intake-ocr')) {
+      setActiveTab('ocr');
+      setIsBookingActive(false);
+    } else if (location.pathname.includes('/appointments') || location.pathname === '/patient') {
+      setActiveTab('appointments');
+      setIsBookingActive(false);
+    }
+  }, [location.pathname]);
 
   const fetchAppointments = async () => {
     try {

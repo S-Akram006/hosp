@@ -1,15 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { queueApi } from '../../api/queueApi.js';
-import { AlertOctagon, Clock, ShieldAlert } from 'lucide-react';
+import { authApi } from '../../api/authApi.js';
+import { AlertOctagon, ShieldAlert } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import Button from '../ui/Button.jsx';
 import Input from '../ui/Input.jsx';
 
 export const EmergencyOverrideModal = ({ isOpen, onClose, doctorId, onSuccess }) => {
+  const [selectedDocId, setSelectedDocId] = useState(doctorId || '');
+  const [doctorsList, setDoctorsList] = useState([]);
   const [delayMinutes, setDelayMinutes] = useState(30);
   const [reason, setReason] = useState('Critical trauma emergency intervention');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (doctorId) {
+      setSelectedDocId(doctorId);
+    } else if (isOpen) {
+      // If admin opened modal without preset doctorId, fetch doctors
+      authApi.getDoctors().then((res) => {
+        if (res.data && res.data.length > 0) {
+          setDoctorsList(res.data);
+          setSelectedDocId((prev) => prev || res.data[0]._id);
+        }
+      }).catch(console.warn);
+    }
+  }, [doctorId, isOpen]);
 
   const quickReasons = [
     'Critical trauma code blue resuscitation',
@@ -20,12 +37,18 @@ export const EmergencyOverrideModal = ({ isOpen, onClose, doctorId, onSuccess })
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const targetDocId = doctorId || selectedDocId;
+    if (!targetDocId) {
+      setError('Please select a physician to apply the emergency override to.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
       const res = await queueApi.triggerEmergencyOverride({
-        doctorId,
+        doctorId: targetDocId,
         delayMinutes: Number(delayMinutes),
         reason,
       });
@@ -59,6 +82,26 @@ export const EmergencyOverrideModal = ({ isOpen, onClose, doctorId, onSuccess })
             ETAs and alert checked-in patients.
           </span>
         </div>
+
+        {!doctorId && (
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              Select Physician On-Duty
+            </label>
+            <select
+              value={selectedDocId}
+              onChange={(e) => setSelectedDocId(e.target.value)}
+              className="w-full text-xs rounded-xl border border-slate-200 bg-white p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-600 cursor-pointer"
+              required
+            >
+              {doctorsList.map((d) => (
+                <option key={d._id} value={d._id}>
+                  Dr. {d.name} — {d.doctorProfile?.specialty || 'General'} ({d.doctorProfile?.department || 'Outpatient'})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div>
           <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">

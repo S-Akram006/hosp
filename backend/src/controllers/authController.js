@@ -60,7 +60,20 @@ export const registerUser = async (req, res, next) => {
     };
 
     if (role === 'doctor') {
-      userData.doctorProfile = doctorProfile || {};
+      const standardHours = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map(
+        (day) => ({
+          dayOfWeek: day,
+          startTime: '08:00',
+          endTime: '18:00',
+        })
+      );
+      userData.doctorProfile = {
+        workingHours: standardHours,
+        ...(doctorProfile || {}),
+      };
+      if (!userData.doctorProfile.workingHours || userData.doctorProfile.workingHours.length === 0) {
+        userData.doctorProfile.workingHours = standardHours;
+      }
     } else if (role === 'patient') {
       userData.patientProfile = patientProfile || {};
     }

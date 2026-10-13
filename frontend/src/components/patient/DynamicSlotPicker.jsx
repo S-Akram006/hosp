@@ -3,12 +3,8 @@ import { authApi } from '../../api/authApi.js';
 import { appointmentApi } from '../../api/appointmentApi.js';
 import {
   Calendar as CalendarIcon,
-  Clock,
-  User,
   CheckCircle2,
   AlertCircle,
-  Stethoscope,
-  Sparkles,
 } from 'lucide-react';
 import Card, { CardContent, CardHeader, CardTitle } from '../ui/Card.jsx';
 import Button from '../ui/Button.jsx';
@@ -76,16 +72,49 @@ export const DynamicSlotPicker = ({ triageContext, onBookingSuccess, onCancel })
     fetchSchedule();
   }, [selectedDoctorId, selectedDate]);
 
-  // 3. Generate candidate slots for the selected day based on dynamic duration
+  const DAYS_OF_WEEK = [
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+  ];
+
+  const selectedDoctor = doctors.find((d) => d._id === selectedDoctorId);
+
+  // 3. Generate candidate slots for the selected day based on dynamic duration & doctor schedule
   const generateSlots = () => {
     const slots = [];
+    if (!selectedDate) return { isOffDuty: false, slots: [] };
+
     const [year, month, day] = selectedDate.split('-').map(Number);
+    const dateObj = new Date(year, month - 1, day);
+    const dayOfWeek = DAYS_OF_WEEK[dateObj.getDay()];
 
-    // Business hours: 09:00 to 17:00 (540 mins to 1020 mins)
-    let currentMinutes = 9 * 60; // 09:00
-    const endOfDayMinutes = 17 * 60; // 17:00
+    const doctorHours = selectedDoctor?.doctorProfile?.workingHours;
+    let startMinOfDay = 9 * 60; // default 09:00
+    let endMinOfDay = 17 * 60; // default 17:00
 
-    while (currentMinutes + durationMinutes <= endOfDayMinutes) {
+    if (doctorHours && doctorHours.length > 0) {
+      const daySchedule = doctorHours.find(
+        (wh) => wh.dayOfWeek.toLowerCase() === dayOfWeek.toLowerCase()
+      );
+
+      if (!daySchedule) {
+        return { isOffDuty: true, dayOfWeek, slots: [] };
+      }
+
+      const [sH, sM] = daySchedule.startTime.split(':').map(Number);
+      const [eH, eM] = daySchedule.endTime.split(':').map(Number);
+      startMinOfDay = (sH || 8) * 60 + (sM || 0);
+      endMinOfDay = (eH || 18) * 60 + (eM || 0);
+    }
+
+    let currentMinutes = startMinOfDay;
+
+    while (currentMinutes + durationMinutes <= endMinOfDay) {
       const startHour = Math.floor(currentMinutes / 60);
       const startMin = currentMinutes % 60;
 
@@ -93,8 +122,9 @@ export const DynamicSlotPicker = ({ triageContext, onBookingSuccess, onCancel })
       const endHour = Math.floor(endMinutesTotal / 60);
       const endMin = endMinutesTotal % 60;
 
-      const slotStart = new Date(year, month - 1, day, startHour, startMin, 0);
-      const slotEnd = new Date(year, month - 1, day, endHour, endMin, 0);
+      // Construct standard UTC timestamps to prevent client/server timezone offset errors
+      const slotStart = new Date(Date.UTC(year, month - 1, day, startHour, startMin, 0));
+      const slotEnd = new Date(Date.UTC(year, month - 1, day, endHour, endMin, 0));
 
       // Check collision with existing doctor appointments
       const hasCollision = existingSchedule.some((booked) => {
@@ -119,11 +149,10 @@ export const DynamicSlotPicker = ({ triageContext, onBookingSuccess, onCancel })
       currentMinutes += durationMinutes;
     }
 
-    return slots;
+    return { isOffDuty: false, dayOfWeek, slots };
   };
 
-  const candidateSlots = generateSlots();
-  const selectedDoctor = doctors.find((d) => d._id === selectedDoctorId);
+  const { isOffDuty, dayOfWeek: selectedDayName, slots: candidateSlots } = generateSlots();
 
   // 4. Handle booking submission
   const handleConfirmBooking = async () => {
@@ -243,6 +272,16 @@ export const DynamicSlotPicker = ({ triageContext, onBookingSuccess, onCancel })
           {isLoadingSlots ? (
             <div className="p-6 text-center text-xs text-slate-400">
               Checking doctor calendar and room availability...
+            </div>
+          ) : isOffDuty ? (
+            <div className="p-6 bg-amber-50/70 border border-amber-200/80 rounded-xl text-center">
+              <AlertCircle className="w-5 h-5 text-amber-600 mx-auto mb-1.5" />
+              <p className="text-xs font-bold text-amber-900">
+                Dr. {selectedDoctor?.name || 'Doctor'} is not on duty on {selectedDayName || 'this day'}.
+              </p>
+              <p className="text-[11px] text-amber-700 mt-0.5">
+                Please select another day or choose a different physician from the dropdown above.
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">

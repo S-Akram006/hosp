@@ -3,6 +3,9 @@ import { io } from 'socket.io-client';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 
+// Persistent listener registry across reconnects and component lifecycles
+const eventListeners = new Map();
+
 export const useSocketStore = create((set, get) => ({
   socket: null,
   isConnected: false,
@@ -111,6 +114,13 @@ export const useSocketStore = create((set, get) => ({
       }));
     });
 
+    // Re-attach all registered listeners to newly initialized socket
+    eventListeners.forEach((callbacks, eventName) => {
+      callbacks.forEach((cb) => {
+        socketInstance.on(eventName, cb);
+      });
+    });
+
     set({ socket: socketInstance });
   },
 
@@ -125,6 +135,14 @@ export const useSocketStore = create((set, get) => ({
   clearNotifications: () => set({ notifications: [] }),
 
   subscribe: (eventName, callback) => {
+    if (!eventName || !callback) return;
+    let list = eventListeners.get(eventName);
+    if (!list) {
+      list = new Set();
+      eventListeners.set(eventName, list);
+    }
+    list.add(callback);
+
     const socket = get().socket;
     if (socket) {
       socket.on(eventName, callback);
@@ -132,6 +150,15 @@ export const useSocketStore = create((set, get) => ({
   },
 
   unsubscribe: (eventName, callback) => {
+    if (!eventName || !callback) return;
+    const list = eventListeners.get(eventName);
+    if (list) {
+      list.delete(callback);
+      if (list.size === 0) {
+        eventListeners.delete(eventName);
+      }
+    }
+
     const socket = get().socket;
     if (socket) {
       socket.off(eventName, callback);

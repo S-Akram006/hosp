@@ -22,15 +22,13 @@ const storage = multer.diskStorage({
   },
 });
 
-// File filter for images and documents
+// File filter for intake document images (Tesseract OCR compatible)
 const fileFilter = (req, file, cb) => {
   const allowedMimeTypes = [
     'image/jpeg',
     'image/png',
     'image/webp',
     'image/jpg',
-    'image/tiff',
-    'application/pdf',
   ];
 
   if (allowedMimeTypes.includes(file.mimetype)) {
@@ -38,7 +36,7 @@ const fileFilter = (req, file, cb) => {
   } else {
     cb(
       new Error(
-        `Unsupported file type '${file.mimetype}'. Please upload a valid image (JPEG, PNG, WebP) or PDF.`
+        `Unsupported file type '${file.mimetype}'. Please upload an image document (JPEG, PNG, WebP).`
       ),
       false
     );

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore.js';
 import {
   Layers,
@@ -6,15 +7,32 @@ import {
   AlertOctagon,
   Activity,
   ShieldCheck,
+  CheckCircle2,
 } from 'lucide-react';
 import Badge from '../../components/ui/Badge.jsx';
 import Button from '../../components/ui/Button.jsx';
 import ResourceMatrixGrid from '../../components/admin/ResourceMatrixGrid.jsx';
 import LiveQueueBoard from '../../components/admin/LiveQueueBoard.jsx';
+import EmergencyOverrideModal from '../../components/doctor/EmergencyOverrideModal.jsx';
 
 export const AdminDashboard = () => {
   const { user } = useAuthStore();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('resources'); // 'resources' | 'queue'
+  const [isOverrideModalOpen, setIsOverrideModalOpen] = useState(false);
+  const [actionNotice, setActionNotice] = useState(null);
+
+  // Synchronize sub-routes directly from sidebar navigation (/admin/live-queue, /admin/resources, /admin/emergency)
+  useEffect(() => {
+    if (location.pathname.includes('/live-queue')) {
+      setActiveTab('queue');
+    } else if (location.pathname.includes('/resources') || location.pathname === '/admin') {
+      setActiveTab('resources');
+    } else if (location.pathname.includes('/emergency')) {
+      setActiveTab('queue');
+      setIsOverrideModalOpen(true);
+    }
+  }, [location.pathname]);
 
   return (
     <div className="space-y-6">
@@ -32,12 +50,27 @@ export const AdminDashboard = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="danger"
+            size="md"
+            icon={AlertOctagon}
+            onClick={() => setIsOverrideModalOpen(true)}
+          >
+            Emergency Override
+          </Button>
           <Badge variant="primary" size="md" className="bg-white/10 text-white border-white/20">
             Admin: {user?.name || 'Administrator'}
           </Badge>
         </div>
       </div>
+
+      {actionNotice && (
+        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-150">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{actionNotice}</span>
+        </div>
+      )}
 
       {/* Navigation Tabs */}
       <div className="flex border-b border-slate-200 gap-4">
@@ -69,6 +102,16 @@ export const AdminDashboard = () => {
       {/* Content based on selected tab */}
       {activeTab === 'resources' && <ResourceMatrixGrid />}
       {activeTab === 'queue' && <LiveQueueBoard />}
+
+      {/* Emergency Override Modal for Admin */}
+      <EmergencyOverrideModal
+        isOpen={isOverrideModalOpen}
+        onClose={() => setIsOverrideModalOpen(false)}
+        onSuccess={(res) => {
+          setActionNotice(res.message);
+          setTimeout(() => setActionNotice(null), 5000);
+        }}
+      />
     </div>
   );
 };
