@@ -88,8 +88,8 @@ export const Login = () => {
           className="w-full mt-2"
           isLoading={isLoading}
         >
-          Sign In to Portal
-          <ArrowRight className="w-4 h-4 ml-1" />
+          {isLoading ? 'Connecting to Portal...' : 'Sign In to Portal'}
+          {!isLoading && <ArrowRight className="w-4 h-4 ml-1" />}
         </Button>
       </form>
 

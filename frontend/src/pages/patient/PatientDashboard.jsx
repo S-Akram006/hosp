@@ -28,6 +28,7 @@ export const PatientDashboard = () => {
 
   const [appointments, setAppointments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [activeTab, setActiveTab] = useState('appointments'); // 'appointments' | 'ocr'
   const [isTriageOpen, setIsTriageOpen] = useState(false);
   const [triageContext, setTriageContext] = useState(null);
@@ -49,6 +50,8 @@ export const PatientDashboard = () => {
   }, [location.pathname]);
 
   const fetchAppointments = async () => {
+    setIsLoading(true);
+    setFetchError(null);
     try {
       const res = await appointmentApi.getMyAppointments();
       if (res.data) {
@@ -56,6 +59,7 @@ export const PatientDashboard = () => {
       }
     } catch (err) {
       console.warn('Could not fetch appointments:', err);
+      setFetchError(err.message || 'Unable to load appointments.');
     } finally {
       setIsLoading(false);
     }
@@ -236,6 +240,13 @@ export const PatientDashboard = () => {
 
           {isLoading ? (
             <div className="p-12 text-center text-xs text-slate-400">Loading appointments...</div>
+          ) : fetchError ? (
+            <Card className="p-8 text-center border-rose-100 bg-rose-50/30">
+              <p className="text-xs text-rose-700 font-medium mb-3">{fetchError}</p>
+              <Button variant="outline" size="sm" onClick={fetchAppointments}>
+                Retry Loading
+              </Button>
+            </Card>
           ) : appointments.length === 0 ? (
             <Card className="p-12 text-center">
               <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />

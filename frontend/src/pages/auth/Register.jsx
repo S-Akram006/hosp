@@ -207,8 +207,8 @@ export const Register = () => {
           className="w-full mt-4"
           isLoading={isLoading}
         >
-          Complete Registration
-          <ArrowRight className="w-4 h-4 ml-1" />
+          {isLoading ? 'Creating Account...' : 'Complete Registration'}
+          {!isLoading && <ArrowRight className="w-4 h-4 ml-1" />}
         </Button>
       </form>
 

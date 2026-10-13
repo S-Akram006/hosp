@@ -29,6 +29,8 @@ export const DoctorDashboard = () => {
   const location = useLocation();
 
   const [appointments, setAppointments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [currentSoapNote, setCurrentSoapNote] = useState(null);
   const [isOverrideModalOpen, setIsOverrideModalOpen] = useState(false);
@@ -42,6 +44,8 @@ export const DoctorDashboard = () => {
   }, [location.pathname]);
 
   const fetchDoctorAppointments = async () => {
+    setIsLoading(true);
+    setFetchError(null);
     try {
       const res = await appointmentApi.getMyAppointments();
       if (res.data) {
@@ -56,6 +60,9 @@ export const DoctorDashboard = () => {
       }
     } catch (err) {
       console.warn('Could not fetch doctor appointments:', err);
+      setFetchError(err.message || 'Unable to load doctor appointments.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -186,7 +193,16 @@ export const DoctorDashboard = () => {
               </Badge>
             </CardHeader>
             <CardContent className="p-0 max-h-[640px] overflow-y-auto divide-y divide-slate-100">
-              {appointments.length === 0 ? (
+              {isLoading ? (
+                <div className="p-8 text-center text-xs text-slate-400">Loading patient queue...</div>
+              ) : fetchError ? (
+                <div className="p-6 text-center text-xs text-rose-600 bg-rose-50/50">
+                  <p className="mb-2">{fetchError}</p>
+                  <Button variant="outline" size="sm" onClick={fetchDoctorAppointments}>
+                    Retry
+                  </Button>
+                </div>
+              ) : appointments.length === 0 ? (
                 <div className="p-8 text-center text-xs text-slate-400">
                   No appointments scheduled for today.
                 </div>
