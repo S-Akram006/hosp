@@ -6,6 +6,7 @@ import {
   structureOcrDocument,
 } from '../services/aiService.js';
 import { extractTextFromImage, cleanupFile } from '../services/ocrService.js';
+import { broadcastQueueStatusChange } from './queueController.js';
 
 /**
  * @desc    AI Symptom Triage & Dynamic Slot Sizing
@@ -206,6 +207,9 @@ export const signMedicalRecord = async (req, res, next) => {
     // Transition appointment to completed
     appointment.status = 'completed';
     await appointment.save();
+
+    // Broadcast real-time status change to waiting monitors and doctor room
+    broadcastQueueStatusChange(appointment);
 
     res.status(200).json({
       success: true,

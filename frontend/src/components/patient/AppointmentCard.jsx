@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import {
   Calendar,
   Clock,
-  User,
   AlertTriangle,
   Stethoscope,
-  XCircle,
   Building,
 } from 'lucide-react';
 import Card, { CardContent } from '../ui/Card.jsx';
@@ -15,6 +13,21 @@ import { appointmentApi } from '../../api/appointmentApi.js';
 
 export const AppointmentCard = ({ appointment, onStatusChange }) => {
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
+
+  const handleCheckIn = async () => {
+    setIsCheckingIn(true);
+    try {
+      await appointmentApi.updateStatus(appointment._id, 'checked-in');
+      if (onStatusChange) {
+        onStatusChange(appointment._id, 'checked-in');
+      }
+    } catch (err) {
+      alert(`Could not check in: ${err.message}`);
+    } finally {
+      setIsCheckingIn(false);
+    }
+  };
 
   const handleCancel = async () => {
     if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
@@ -146,7 +159,7 @@ export const AppointmentCard = ({ appointment, onStatusChange }) => {
 
         {/* Action Buttons */}
         {appointment.status === 'scheduled' && (
-          <div className="pt-2 flex justify-end">
+          <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
             <Button
               variant="outline"
               size="sm"
@@ -155,6 +168,15 @@ export const AppointmentCard = ({ appointment, onStatusChange }) => {
               className="text-rose-600 border-rose-200 hover:bg-rose-50 hover:border-rose-300"
             >
               Cancel Booking
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleCheckIn}
+              isLoading={isCheckingIn}
+              className="bg-cyan-600 hover:bg-cyan-700 text-white"
+            >
+              Check In Online
             </Button>
           </div>
         )}

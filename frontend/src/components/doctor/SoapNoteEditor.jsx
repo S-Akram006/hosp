@@ -4,7 +4,6 @@ import {
   FileCheck,
   Plus,
   Trash2,
-  CheckCircle2,
   AlertCircle,
   FileSignature,
   Pill,

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore.js';
 import { useSocketStore } from '../../store/useSocketStore.js';
 import { appointmentApi } from '../../api/appointmentApi.js';
@@ -25,12 +26,20 @@ import EmergencyOverrideModal from '../../components/doctor/EmergencyOverrideMod
 export const DoctorDashboard = () => {
   const { user } = useAuthStore();
   const { subscribe, unsubscribe } = useSocketStore();
+  const location = useLocation();
 
   const [appointments, setAppointments] = useState([]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [currentSoapNote, setCurrentSoapNote] = useState(null);
   const [isOverrideModalOpen, setIsOverrideModalOpen] = useState(false);
   const [actionNotice, setActionNotice] = useState(null);
+
+  // Sync sub-routes directly from sidebar navigation (/doctor/emergency, etc.)
+  useEffect(() => {
+    if (location.pathname.includes('/emergency')) {
+      setIsOverrideModalOpen(true);
+    }
+  }, [location.pathname]);
 
   const fetchDoctorAppointments = async () => {
     try {
@@ -251,13 +260,35 @@ export const DoctorDashboard = () => {
                           {a.triage?.urgencyLevel || 'routine'} priority
                         </span>
                         <div className="space-x-1">
+                          {a.status === 'scheduled' && (
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStatusUpdate(a._id, 'checked-in');
+                                }}
+                                className="px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-md text-[11px] font-semibold cursor-pointer"
+                              >
+                                Check In
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStatusUpdate(a._id, 'in-consultation');
+                                }}
+                                className="px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-[11px] font-semibold cursor-pointer"
+                              >
+                                Start
+                              </button>
+                            </>
+                          )}
                           {a.status === 'checked-in' && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleStatusUpdate(a._id, 'in-consultation');
                               }}
-                              className="px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-[11px] font-semibold"
+                              className="px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-[11px] font-semibold cursor-pointer"
                             >
                               Start Consult
                             </button>
@@ -268,7 +299,7 @@ export const DoctorDashboard = () => {
                                 e.stopPropagation();
                                 handleStatusUpdate(a._id, 'completed');
                               }}
-                              className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-[11px] font-semibold"
+                              className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-[11px] font-semibold cursor-pointer"
                             >
                               Finish
                             </button>

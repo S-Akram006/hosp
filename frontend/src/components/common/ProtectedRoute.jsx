@@ -25,9 +25,15 @@ export const ProtectedRoute = ({ allowedRoles = [] }) => {
 
   // If specific roles are required, verify match
   if (allowedRoles.length > 0 && !allowedRoles.includes(role)) {
-    // Redirect user to their own role dashboard
+    // Redirect user to their own role dashboard, or login if role is undefined
     const defaultRoute =
-      role === 'patient' ? '/patient' : role === 'doctor' ? '/doctor' : '/admin';
+      role === 'patient'
+        ? '/patient'
+        : role === 'doctor'
+        ? '/doctor'
+        : role === 'admin'
+        ? '/admin'
+        : '/login';
     return <Navigate to={defaultRoute} replace />;
   }
 

@@ -36,7 +36,7 @@ export const initSocket = (httpServer) => {
       try {
         const decoded = jwt.verify(
           token,
-          process.env.JWT_SECRET || 'supersecret_jwt_key_change_in_production_12345'
+          process.env.JWT_SECRET || 'fallback_development_secret'
         );
         socket.user = decoded; // { id, role }
       } catch (err) {

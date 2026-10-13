@@ -26,11 +26,12 @@ const timeStringToMinutes = (timeStr) => {
 /**
  * Format Date object to HH:MM (24-hour)
  * @param {Date} date
+ * @param {boolean} useUTC
  * @returns {string}
  */
-const formatTimeHHMM = (date) => {
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
+const formatTimeHHMM = (date, useUTC = false) => {
+  const hours = String(useUTC ? date.getUTCHours() : date.getHours()).padStart(2, '0');
+  const minutes = String(useUTC ? date.getUTCMinutes() : date.getMinutes()).padStart(2, '0');
   return `${hours}:${minutes}`;
 };
 
@@ -39,15 +40,22 @@ const formatTimeHHMM = (date) => {
  * @param {Object} doctor - Doctor User document
  * @param {Date} startTime
  * @param {Date} endTime
+ * @param {boolean|null} forceUTC
  * @returns {{ valid: boolean, message?: string }}
  */
-export const validateDoctorWorkingHours = (doctor, startTime, endTime) => {
+export const validateDoctorWorkingHours = (doctor, startTime, endTime, forceUTC = null) => {
   if (!doctor.doctorProfile?.workingHours || doctor.doctorProfile.workingHours.length === 0) {
     // If no working hours defined, default to permitted
     return { valid: true };
   }
 
-  const dayOfWeek = DAYS_OF_WEEK[startTime.getDay()];
+  const useUTC =
+    forceUTC !== null
+      ? forceUTC
+      : (typeof startTime === 'string' && startTime.includes('Z')) ||
+        (typeof endTime === 'string' && endTime.includes('Z'));
+
+  const dayOfWeek = DAYS_OF_WEEK[useUTC ? startTime.getUTCDay() : startTime.getDay()];
   const schedule = doctor.doctorProfile.workingHours.find(
     (wh) => wh.dayOfWeek.toLowerCase() === dayOfWeek.toLowerCase()
   );
@@ -59,8 +67,10 @@ export const validateDoctorWorkingHours = (doctor, startTime, endTime) => {
     };
   }
 
-  const startMinutes = startTime.getHours() * 60 + startTime.getMinutes();
-  const endMinutes = endTime.getHours() * 60 + endTime.getMinutes();
+  const startMinutes = (useUTC ? startTime.getUTCHours() : startTime.getHours()) * 60 +
+                       (useUTC ? startTime.getUTCMinutes() : startTime.getMinutes());
+  const endMinutes = (useUTC ? endTime.getUTCHours() : endTime.getHours()) * 60 +
+                     (useUTC ? endTime.getUTCMinutes() : endTime.getMinutes());
 
   const scheduleStartMinutes = timeStringToMinutes(schedule.startTime);
   const scheduleEndMinutes = timeStringToMinutes(schedule.endTime);
@@ -68,8 +78,9 @@ export const validateDoctorWorkingHours = (doctor, startTime, endTime) => {
   if (startMinutes < scheduleStartMinutes || endMinutes > scheduleEndMinutes) {
     return {
       valid: false,
-      message: `Appointment window (${formatTimeHHMM(startTime)} - ${formatTimeHHMM(
-        endTime
+      message: `Appointment window (${formatTimeHHMM(startTime, useUTC)} - ${formatTimeHHMM(
+        endTime,
+        useUTC
       )}) is outside Dr. ${doctor.name}'s working hours on ${dayOfWeek} (${schedule.startTime} - ${schedule.endTime})`,
     };
   }
@@ -215,8 +226,12 @@ export const validateAppointmentSlot = async ({
     };
   }
 
+  const isUTC =
+    (typeof startTime === 'string' && startTime.includes('Z')) ||
+    (typeof endTime === 'string' && endTime.includes('Z'));
+
   // 1. Verify working hours
-  const workingHoursCheck = validateDoctorWorkingHours(doctor, start, end);
+  const workingHoursCheck = validateDoctorWorkingHours(doctor, start, end, isUTC);
   if (!workingHoursCheck.valid) {
     return { valid: false, statusCode: 400, message: workingHoursCheck.message };
   }

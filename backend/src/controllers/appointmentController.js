@@ -227,14 +227,14 @@ export const updateAppointmentStatus = async (req, res, next) => {
 
     // Authorization checks
     if (req.user.role === 'patient') {
-      // Patients are only permitted to cancel their own appointments
+      // Patients are permitted to check in or cancel their own appointments
       if (appointment.patientId.toString() !== req.user._id.toString()) {
         res.status(403);
         throw new Error('Access forbidden: You can only update your own appointment');
       }
-      if (status !== 'cancelled') {
+      if (status !== 'cancelled' && status !== 'checked-in') {
         res.status(403);
-        throw new Error('Patients can only change appointment status to cancelled');
+        throw new Error('Patients can only check-in or cancel their own appointment');
       }
     } else if (req.user.role === 'doctor') {
       // Doctors can only update appointments assigned to them

@@ -4,10 +4,7 @@ import {
   Mic,
   MicOff,
   Sparkles,
-  Play,
-  RotateCcw,
   Volume2,
-  FileText,
   AlertCircle,
 } from 'lucide-react';
 import Card, { CardContent, CardHeader, CardTitle } from '../ui/Card.jsx';
